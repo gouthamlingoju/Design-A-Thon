@@ -25,16 +25,16 @@ flowchart TD
         B --> C["🗺️ Geo Reasoning Engine\nTask Planning & Workflow Generation\n──────────────────────────────────\nDecides: Dataset · Analysis Type · Execution Steps"]
     end
 
-    subgraph DATA_LAYER["🛰️ Data Layer"]
-        D["📡 Data Retrieval Layer\nSatellite API Gateway"]
-        E1["🌍 Sentinel\n(ESA)"]
-        E2["🛸 Landsat\n(NASA)"]
-        E3["🗺️ ISRO Bhuvan\n(Optional)"]
-        D --> E1 & E2 & E3
+    subgraph DATA_LAYER["🛰️ Data & Compute Layer"]
+        D["🌍 Google Earth Engine (GEE) API\nCentral Data & Processing Hub"]
+        E1["📡 Sentinel-2\n(Copernicus)"]
+        E2["📡 Landsat 8/9\n(USGS)"]
+        E3["🛰️ MODIS / VIIRS\n(Environmental)"]
+        D --- E1 & E2 & E3
     end
 
-    subgraph PROCESSING["⚙️ Processing Engine"]
-        F["👁️ Computer Vision Engine\n─────────────────────────\n• Change Detection (Before vs After)\n• Object Detection (Roads, Buildings, Vegetation)\n• Deep Learning Models"]
+    subgraph PROCESSING["⚙️ Specialized ML Engine"]
+        F["👁️ Computer Vision Engine\n─────────────────────────\n• Change Detection (GEE-assisted)\n• Object Detection (YOLOv8)\n• Deep Learning Refinement"]
     end
 
     subgraph INSIGHT["💡 Insight & Output Layer"]
@@ -81,8 +81,8 @@ sequenceDiagram
 
     User->>LLM: "Show urban expansion in Hyderabad (2015–2024)"
     LLM->>GEO: Structured intent {location, time_range, task=change_detection}
-    GEO->>SAT: Fetch Sentinel/Landsat tiles for region + dates
-    SAT-->>CV: Raw multispectral imagery (before & after)
+    GEO->>SAT: GEE Query (FilterBounds, FilterDate, CloudMask)
+    SAT-->>CV: Mosaicked & Pre-processed Tiles (via GEE)
     CV->>CV: Run change detection & object classification models
     CV-->>OUT: Change masks, detected objects, delta statistics
     OUT->>OUT: LLM generates natural language explanation
@@ -115,10 +115,10 @@ graph LR
         ML3["NDVI / Spectral\nAnalysis"]
     end
 
-    subgraph DataSources["🛰️ Satellite Data Sources"]
-        DS1["Sentinel-2\n(ESA)"]
-        DS2["Landsat 8/9\n(NASA/USGS)"]
-        DS3["ISRO Bhuvan\n(Optional)"]
+    subgraph DataSources["🛰️ Google Earth Engine (GEE)"]
+        GEE1["Sentinel-2 (L2A)"]
+        GEE2["Landsat (OILI-2)"]
+        GEE3["Climate & Land Cover\nDatasets"]
     end
 
     subgraph Storage["🗄️ Storage & DB"]
@@ -156,8 +156,8 @@ graph LR
 | 🎯 Input | User Interface | Accepts natural language queries |
 | 🧠 Understanding | LLM Engine | Extracts location, time range, and analysis type |
 | 🗺️ Planning | Geo Reasoning Engine | Generates geospatial task workflows |
-| 🛰️ Data | Data Retrieval Layer | Fetches Sentinel / Landsat / Bhuvan imagery |
-| 👁️ Processing | Computer Vision Engine | Change detection & object classification |
+| 🛰️ Data | Google Earth Engine (GEE) | Central API for data retrieval, cloud masking, and mosaicking |
+| 👁️ Processing | Computer Vision Engine | Specialized analysis (YOLO/U-Net) on GEE-preprocessed data |
 | 💡 Intelligence | Insight Generation | LLM + CV fusion → explanations & statistics |
 | 🗺️ Presentation | Visualization Layer | Interactive maps, heatmaps, time sliders |
 | 📤 Output | Output Layer | Reports, visual insights, explanations |
@@ -173,12 +173,14 @@ graph LR
 - Converts query into a structured format for downstream modules
 
 ### 3.3 Geo Reasoning Engine (Planning Layer)
-- Breaks query into geospatial tasks
-- Decides which dataset to use and what analysis to perform
-- Generates a step-by-step execution workflow
+- Breaks query into geospatial tasks (e.g., "Calculate NDVI", "Find Urban Delta")
+- Decides which GEE Image Collections to use (Sentinel, Landsat, CHIRPS)
+- Generates a optimized GEE script/workflow for execution
 
-### 3.4 Data Retrieval Layer
-- Fetches satellite data from: **Sentinel (ESA)**, **Landsat (NASA)**, **ISRO Bhuvan** (optional)
+### 3.4 Data & Compute Layer (GEE)
+- Functions as the primary API for satellite data: **Sentinel-2**, **Landsat 8/9**, **MODIS**
+- Handles server-side cloud masking, spectral indices (NDVI/EVI), and temporal mosaicking
+- Streams processed image tiles to the CV Engine for high-level object detection
 
 ### 3.5 Computer Vision Engine
 - Performs **change detection** (before vs. after images)
